@@ -1,4 +1,3 @@
-
 let prevMinimumReads: number[] = []
 let previousTara = 0
 let output = 0
@@ -7,11 +6,7 @@ let maxValueWeightFirstRead = 0
 let keepResetState = false
 let valueReturnInterp = 0
 
-export const calculateNewMinimumWeight = (
-  read: number,
-  tara: number,
-  size: number,
-): number => {
+export const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
   const kegNetSize = tara * 1000
   const resetPoint = tara * 1000 * 0.75
 
