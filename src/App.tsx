@@ -1,45 +1,35 @@
-import { useState } from 'react'
-import logo from './logo.svg'
+import Sketch, { P5 } from 'react-p5'
+
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+let x = 0
+const canvasWidth = 960
+const canvasHeight = 640
+
+let y = canvasHeight * 0.2
+
+const updateY = setInterval(() => {
+  y = y < canvasHeight ? y + 5 : canvasHeight * 0.2
+}, 100)
+
+export function App() {
+  const setup = (p5: P5, canvasParentRef: Element) => {
+    p5.createCanvas(canvasWidth, canvasHeight).parent(canvasParentRef)
+    p5.background(41, 49, 58)
+  }
+
+  const draw = (p5: P5) => {
+    x = x < canvasWidth ? x + 1 : 0
+    p5.background(41, 49, 58, 2)
+    p5.fill(255, 255, 255).ellipse(x, y, 8).noStroke()
+    p5.fill(0, 0, 0).rect(canvasWidth - 80, 0, 80, 48)
+    p5.textSize(28)
+    p5.fill(255, 255, 255).text(x.toString().padStart(3, '0'), canvasWidth - 64, 32)
+  }
 
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React!</p>
-        <p>
-          <button type="button" onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code>App.tsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {' | '}
-          <a
-            className="App-link"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
-      </header>
+      <Sketch setup={setup} draw={draw} />
     </div>
   )
 }
-
-export default App
