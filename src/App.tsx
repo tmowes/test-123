@@ -10,6 +10,30 @@ const kegType = {
   size: 30,
 }
 
+let prevMinimumReads: number[] = []
+let previousTara = 0
+let output = 0
+let timeOut = 0
+let maxValueWeightFirstRead = 0
+let keepResetState = false
+let valueReturnInterp = 0
+
+let temperature = '-5|0|1|0|1|2|HM20'
+
+let x = 0
+const canvasWidth = 1240
+const canvasHeight = 640
+
+let timeout = 0
+let rawRead = 0
+let countReadings = 0
+
+let y = canvasHeight * 0.2
+
+const textSpace = 128
+
+const borderHeight = 120
+
 const readingsArray = createLongArray()
 
 const isValidRead = (value: number, threshold: number) =>
@@ -89,13 +113,9 @@ const calculateNewMinimumWeight = (read: number, tara: number, size: number): nu
   return tara
 }
 
-let temperature = '-5|0|1|0|1|2|HM20'
-
-const timeToUpdateTemperature = 800 // 800 milliseconds
+const timeToUpdateTemperature = 800
 let count = 0
 setInterval(() => {
-  // const randomTemp = Math.random() * 1000 * 0.1 + 41000
-  // dispatch(executeTest(TagTypes.READ_TEMPERATURE))
   temperature = `-5|${readingsArray[count]}|1|0|1|2|HM20`
   count += 1
   if (count > readingsArray.length - 1) count = 0
@@ -107,29 +127,6 @@ const rawWeight = calculateNewMinimumWeight(
   kegType?.size,
 )
 
-// const newMinimum = setWeightValue(rawWeight, kegType?.tara)
-
-let prevMinimumReads: number[] = []
-let previousTara = 0
-let output = 0
-let timeOut = 0
-let maxValueWeightFirstRead = 0
-let keepResetState = false
-let valueReturnInterp = 0
-
-let x = 0
-const canvasWidth = 1240
-const canvasHeight = 640
-
-let timeout = 0
-let rawRead = 0
-let countReadings = 0
-
-let y = canvasHeight * 0.2
-
-const textSpace = 128
-
-const borderHeight = 120
 const logsPos = {
   log1: (canvasWidth * 0) / 4 - textSpace * 0,
   log2: (canvasWidth * 1) / 4 - textSpace * 1,
@@ -155,8 +152,6 @@ setInterval(() => {
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t // linear interpolation t{0,1}
 
 const test = (m: number, max: number, value: number) => m - m * (value / max)
-// = 30 *  30000/31000
-// = $D$6 * C7/$C$6
 
 const readValue = 42000
 
