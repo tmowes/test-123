@@ -33,6 +33,8 @@ let rawRead = 30000
 let rawWeight = 30 // between 0, 30kg
 let count = 0
 
+//add
+
 const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
   const internalRead = Math.round((read / 1000) * 2) / 2
   if (timeOut >= 30) {
@@ -53,6 +55,7 @@ const calculateNewMinimumWeight = (read: number, tara: number, size: number): nu
   if (timeOut !== 0) {
     consoleLog = '(timeOut !== 0)'
     timeOut += 1
+
     return clamp(tara, tara, size + tara)
   }
 
