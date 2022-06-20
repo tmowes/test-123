@@ -62,7 +62,7 @@ const calculateNewMinimumWeight = (read: number, tara: number, size: number): nu
   return clamp(internalRead, tara, size + tara)
 }
 
-const timeToUpdateTemperature = 50
+const timeToUpdateTemperature = 400
 
 setInterval(() => {
   temperature = `-5|${readingsArray[count]}|1|0|1|2|HM20`
