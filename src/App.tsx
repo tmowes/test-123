@@ -35,11 +35,25 @@ let count = 0
 
 //add
 let maxReadValue = 0
-let resultValue = 0
 let teste = 0
+let valorLid = 0
+
+let readValue = '0'
+let lastRead = 0
+
 
 const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
   const internalRead = Math.round((read / 1000) * 2) / 2
+  if (read > 10000) {
+    if (Math.abs(lastRead - read) < 500) {
+      readValue =  String(Math.round(lastRead)) + String(Math.round(read))+ 'leitura proxima'
+    } else {
+      readValue = String(Math.round(lastRead)) + String(Math.round(read))+ 'leitura diferente'
+    }
+  } else {
+    readValue = String(Math.round(lastRead)) + String(Math.round(read))+  'aguardando leitura'
+  }
+
   if (timeOut >= 30) {
     timeOut = 0
   }
@@ -61,13 +75,16 @@ const calculateNewMinimumWeight = (read: number, tara: number, size: number): nu
   if (timeOut > 26) {
     maxReadValue = Math.round(read)
   }
+  teste = Math.round(remap(read, 10000, maxReadValue, 0, 30 ))
+  lastRead = read
     return clamp(tara, tara, size + tara)
   }
 
   timeOut = 0
   consoleLog = 'timeOut = 0'
-  resultValue = internalRead
   teste = Math.round(remap(read, 10000, maxReadValue, 0, 30 ))
+  valorLid = read
+  lastRead = read
   return clamp(internalRead, tara, size + tara)
 }
 
@@ -76,7 +93,7 @@ const timeToUpdateTemperature = 400
 
 setInterval(() => {
   temperature = `-5|${readingsArray[count]}|1|0|1|2|HM20`
-  if (count > readingsArray.length - 1) count = 0
+  if (count >= readingsArray.length - 1) count = 0
   rawWeight = calculateNewMinimumWeight(
     Number(temperature?.split('|')[1] ?? '00'),
     kegType?.tara,
@@ -90,7 +107,7 @@ setInterval(() => {
 // canvas logs history
 const logs: number[] = []
 const logsWeights: number[] = []
-const logsAjusteWeights: number[] = []
+const logsWeightAdjustment: number[] = []
 
 export function App() {
   const setup = (p5: P5, canvasParentRef: Element) => {
@@ -112,7 +129,7 @@ export function App() {
 
     logs.push(rawRead)
     logsWeights.push(rawWeight)
-    logsAjusteWeights.push(50, 50)
+    logsWeightAdjustment.push(teste)
 
     createHistory(p5, logs, 'orangered', [
       40000,
@@ -121,21 +138,24 @@ export function App() {
       canvasHeight - borderHeight,
     ])
     createHistory(p5, logsWeights, 'cyan', [40, 10, borderHeight, canvasHeight - borderHeight])
+
+    createHistory(p5, logsWeightAdjustment, 'black', [30, 0, borderHeight, canvasHeight - borderHeight])
     
     createDots(
       p5,
       logs,
       logsWeights,
+      logsWeightAdjustment,
       [40000, 10000, borderHeight, canvasHeight - borderHeight],
       [40, 10, borderHeight, canvasHeight - borderHeight],
-      [40000, 10000, borderHeight, canvasHeight - borderHeight],
+      [30, 0, borderHeight, canvasHeight - borderHeight],
     )
       
     p5.fill(...orange)
       .text(customLog(rawRead), logsPos.log1, 32)
       .fill(...blue)
       // .text(customLog(rawRead), logsPos.log2, 32)
-      .text(teste, logsPos.log2, 32)
+      .text(readValue, logsPos.log2, 32)
       .fill(...white)
       .text(consoleLog, logsPos.log3, 32)
 
@@ -148,6 +168,7 @@ export function App() {
     if (logs.length > canvasWidth - borderHeight * 2) {
       logs.splice(0, 1)
       logsWeights.splice(0, 1)
+      logsWeightAdjustment.splice(0, 1)
     }
   }
 
