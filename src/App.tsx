@@ -36,56 +36,117 @@ let count = 0
 //add
 let maxReadValue = 0
 let teste = 0
-let valorLid = 0
 
 let readValue = '0'
+let testeReadValue = 0
 let lastRead = 0
+let travaZeramento = 0
 
 
-const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
-  const internalRead = Math.round((read / 1000) * 2) / 2
-  if (read > 10000) {
-    if (Math.abs(lastRead - read) < 500) {
-      readValue =  String(Math.round(lastRead)) + String(Math.round(read))+ 'leitura proxima'
+// const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
+//   const internalRead = Math.round((read / 1000) * 2) / 2
+//   if (read > tara * 1000) {
+//     if (Math.abs(lastRead - read) < 500) {
+//       readValue =  String(Math.round(lastRead)) + String(Math.round(read))+ 'leitura proxima'
+//     } else {
+//       readValue = String(Math.round(lastRead)) + String(Math.round(read))+ 'leitura diferente'
+//     }
+//   } else {
+//     readValue = String(Math.round(lastRead)) + String(Math.round(read))+  'aguardando leitura'
+//   }
+
+//   if (timeOut >= 30) {
+//     timeOut = 0
+//   }
+
+//   if (previousTara !== tara) {
+//     consoleLog = '(previousTara !== tara)'
+//     timeOut = 20
+//     previousTara = tara
+//   }
+
+//   if (internalRead < tara * 0.75) {
+//     consoleLog = '(internalRead < tara * 0.75)'
+//     timeOut = 1
+//   }
+
+//   if (timeOut !== 0) {
+//     consoleLog = '(timeOut !== 0)'
+//     timeOut += 1
+//   if (timeOut > 26) {
+//     maxReadValue = Math.round(read)
+//   }
+//   teste = Math.round(remap(read, 10000, maxReadValue, 0, 30 ))
+//   lastRead = read
+//     return clamp(tara, tara, size + tara)
+//   }
+
+  const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
+    const internalRead = Math.round((read / 1000) * 2) / 2
+    const internalRead2 = Math.round((read) * 2) / 2
+    let timeRead = 0
+    if (read > tara * 1000) {
+      if (Math.abs(lastRead - read) < 500) {
+        readValue =  'estabilizado'
+        timeOut += 1
+        if(timeOut > 5){
+
+          maxReadValue = Math.round(read)
+          travaZeramento = 1
+        }
+      } else {
+        readValue = '!='
+        timeOut = 0
+      }
     } else {
-      readValue = String(Math.round(lastRead)) + String(Math.round(read))+ 'leitura diferente'
+      readValue = clamp(tara, tara, size + tara) + 'aguardando'
+    }
+  
+    // if (timeOut >= 30) {
+    //   timeOut = 0
+    // }
+  
+    // if (previousTara !== tara) {
+    //   consoleLog = '(previousTara !== tara)'
+    //   timeOut = 20
+    //   previousTara = tara
+    // }
+  
+    if (internalRead < tara * 0.75) {
+      consoleLog = '(internalRead < tara * 0.75)'
+      timeOut = 1
+      travaZeramento = 0
+    }
+  
+    // if (timeOut !== 0) {
+    //   consoleLog = '(timeOut !== 0)'
+    //   timeOut += 1
+    // if (timeOut > 26) {
+    //   maxReadValue = Math.round(read)
+    // }
+    // teste = Math.round(remap(read, 10000, maxReadValue, 0, 30 ))
+    // lastRead = read
+    //   return clamp(tara, tara, size + tara)
+    // }
+
+  // timeOut = 0
+  consoleLog = 'timeOut = 0'
+  if(travaZeramento == 1) {
+    if (maxReadValue - (tara *1000) > size * 1000){
+      if(internalRead2 > tara*1000){
+        teste = remap(internalRead2, 10000, maxReadValue, 0, 30 )
+        // timeRead = remap(internalRead2, 10000, maxReadValue, 0, 30 )
+      } 
+    } else {
+      timeRead = clamp(internalRead, tara, size + tara)
+      // return clamp(internalRead, tara, size + tara)
     }
   } else {
-    readValue = String(Math.round(lastRead)) + String(Math.round(read))+  'aguardando leitura'
+    teste = remap(tara * 1000, 10000, maxReadValue, 0, 30 )
+    timeRead = remap(tara * 1000, 10000, maxReadValue, 0, 30 )
   }
-
-  if (timeOut >= 30) {
-    timeOut = 0
-  }
-
-  if (previousTara !== tara) {
-    consoleLog = '(previousTara !== tara)'
-    timeOut = 20
-    previousTara = tara
-  }
-
-  if (internalRead < tara * 0.75) {
-    consoleLog = '(internalRead < tara * 0.75)'
-    timeOut = 1
-  }
-
-  if (timeOut !== 0) {
-    consoleLog = '(timeOut !== 0)'
-    timeOut += 1
-  if (timeOut > 26) {
-    maxReadValue = Math.round(read)
-  }
-  teste = Math.round(remap(read, 10000, maxReadValue, 0, 30 ))
   lastRead = read
-    return clamp(tara, tara, size + tara)
-  }
-
-  timeOut = 0
-  consoleLog = 'timeOut = 0'
-  teste = Math.round(remap(read, 10000, maxReadValue, 0, 30 ))
-  valorLid = read
-  lastRead = read
-  return clamp(internalRead, tara, size + tara)
+  return timeRead
 }
 
 
@@ -155,7 +216,7 @@ export function App() {
       .text(customLog(rawRead), logsPos.log1, 32)
       .fill(...blue)
       // .text(customLog(rawRead), logsPos.log2, 32)
-      .text(readValue, logsPos.log2, 32)
+      .text(testeReadValue, logsPos.log2, 32)
       .fill(...white)
       .text(consoleLog, logsPos.log3, 32)
 
