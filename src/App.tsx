@@ -34,6 +34,9 @@ let rawWeight = 30 // between 0, 30kg
 let count = 0
 
 //add
+let maxReadValue = 0
+let resultValue = 0
+let teste = 0
 
 const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
   const internalRead = Math.round((read / 1000) * 2) / 2
@@ -55,15 +58,19 @@ const calculateNewMinimumWeight = (read: number, tara: number, size: number): nu
   if (timeOut !== 0) {
     consoleLog = '(timeOut !== 0)'
     timeOut += 1
-
+  if (timeOut > 26) {
+    maxReadValue = Math.round(read)
+  }
     return clamp(tara, tara, size + tara)
   }
 
   timeOut = 0
   consoleLog = 'timeOut = 0'
-
+  resultValue = internalRead
+  teste = Math.round(remap(read, 10000, maxReadValue, 0, 30 ))
   return clamp(internalRead, tara, size + tara)
 }
+
 
 const timeToUpdateTemperature = 400
 
@@ -83,6 +90,7 @@ setInterval(() => {
 // canvas logs history
 const logs: number[] = []
 const logsWeights: number[] = []
+const logsAjusteWeights: number[] = []
 
 export function App() {
   const setup = (p5: P5, canvasParentRef: Element) => {
@@ -104,6 +112,7 @@ export function App() {
 
     logs.push(rawRead)
     logsWeights.push(rawWeight)
+    logsAjusteWeights.push(50, 50)
 
     createHistory(p5, logs, 'orangered', [
       40000,
@@ -112,19 +121,21 @@ export function App() {
       canvasHeight - borderHeight,
     ])
     createHistory(p5, logsWeights, 'cyan', [40, 10, borderHeight, canvasHeight - borderHeight])
-
+    
     createDots(
       p5,
       logs,
       logsWeights,
       [40000, 10000, borderHeight, canvasHeight - borderHeight],
       [40, 10, borderHeight, canvasHeight - borderHeight],
+      [40000, 10000, borderHeight, canvasHeight - borderHeight],
     )
-
+      
     p5.fill(...orange)
       .text(customLog(rawRead), logsPos.log1, 32)
       .fill(...blue)
-      .text(customLog(rawRead), logsPos.log2, 32)
+      // .text(customLog(rawRead), logsPos.log2, 32)
+      .text(teste, logsPos.log2, 32)
       .fill(...white)
       .text(consoleLog, logsPos.log3, 32)
 
