@@ -13,3 +13,6 @@ export const customLog = (value: number) => Math.round(value).toString()
 
 export const clamp = (n: number, min: number, max: number) =>
   n > max ? max : n < min ? min : n
+
+export const ajustedClamp = (n: number, tara: number) =>
+  n > tara ? n - tara : 0
