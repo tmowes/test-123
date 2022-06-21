@@ -39,6 +39,7 @@ let transformLastRead = 0
 let maximumStabilizedValue = 0
 let zeroLock = 0
 let returnedValue = 0
+let lastNumberResult = 0
 
   const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
     const transformRead = Math.round((read / 1000) * 100) / 100
@@ -49,23 +50,28 @@ let returnedValue = 0
         if (timeOutStabilized > 6) {
           zeroLock = 1
           maximumStabilizedValue = transformRead
+          lastNumberResult = transformRead
         }
-        consoleLog = 'Estabilizado'
+        // consoleLog = 'Estabilizado'
       } else {
         timeOutStabilized = 0
-        consoleLog = '!=='
+        // consoleLog = '!=='
       }
     } else {
-      consoleLog = 'Aguardando'
+      // consoleLog = 'Aguardando'
     }
+if (transformRead > lastNumberResult && zeroLock ==1) {
+  consoleLog = 'manter valor anterior'
+} else if ( zeroLock ==1 ) {
+  consoleLog = 'atualizado'
+  lastNumberResult = transformRead
+}
 
-
-
-    if (zeroLock == 1 && transformRead > tara){
+    if (zeroLock == 1 && lastNumberResult > tara){
       if ((maximumStabilizedValue - tara) > size ){
-        returnedValue = remap(transformRead, tara, maximumStabilizedValue, 0, size )
+        returnedValue = remap(lastNumberResult, tara, maximumStabilizedValue, 0, size )
       } else {
-        returnedValue = ajustedClamp(transformRead, tara)
+        returnedValue = ajustedClamp(lastNumberResult, tara)
       }
     } else {
       returnedValue = ajustedClamp(tara, tara)
