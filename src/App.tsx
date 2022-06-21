@@ -14,59 +14,71 @@ import {
 import { createDots } from './createDots'
 import { createHistory } from './createHistory'
 import { createLongArray } from './createLongArray'
-import { remap, customLog, clamp } from './utils'
+import { remap, customLog, adjustedClamp, customLog3 } from './utils'
 
 // canvas center log
-let consoleLog = ''
+const consoleLog = ''
 
 // scenario creation
 const readingsArray = createLongArray()
 const kegType = { tara: 10, size: 30 }
-
-// reading properties
-const prevMinimumReads: number[] = []
-let timeOut = 0
-let previousTara = 0
 
 let temperature = '-5|0|1|0|1|2|HM20'
 let rawRead = 30000
 let rawWeight = 30 // between 0, 30kg
 let count = 0
 
+//
+let timeOutStabilized = 0
+let consoleReadValue = '0'
+let transformPreviousRead = 0
+let maxStabilizedRead = 0
+let zeroLock = false
+let calculatedWeight = 0
+let previousRead = 0
+
 const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
-  const internalRead = Math.round((read / 1000) * 2) / 2
-  if (timeOut >= 30) {
-    timeOut = 0
+  const transformRead = Math.round((read / 1000) * 100) / 100
+  if (transformRead < tara * 0.25) {
+    zeroLock = false
   }
 
-  if (previousTara !== tara) {
-    consoleLog = '(previousTara !== tara)'
-    timeOut = 20
-    previousTara = tara
+  if (transformRead > tara) {
+    if (Math.abs(transformPreviousRead - transformRead) < 0.5) {
+      timeOutStabilized += 1
+      if (timeOutStabilized > 6) {
+        zeroLock = true
+        maxStabilizedRead = transformRead
+        previousRead = transformRead
+      }
+    } else {
+      timeOutStabilized = 0
+    }
+  }
+  if (transformRead < previousRead && zeroLock) {
+    previousRead = transformRead
   }
 
-  if (internalRead < tara * 0.75) {
-    consoleLog = '(internalRead < tara * 0.75)'
-    timeOut = 1
+  if (previousRead > tara && zeroLock) {
+    if (maxStabilizedRead - tara > size) {
+      calculatedWeight = remap(previousRead, tara, maxStabilizedRead, 0, size)
+    } else {
+      calculatedWeight = adjustedClamp(previousRead, tara)
+    }
+  } else {
+    calculatedWeight = adjustedClamp(tara, tara)
   }
 
-  if (timeOut !== 0) {
-    consoleLog = '(timeOut !== 0)'
-    timeOut += 1
-    return clamp(tara, tara, size + tara)
-  }
-
-  timeOut = 0
-  consoleLog = 'timeOut = 0'
-
-  return clamp(internalRead, tara, size + tara)
+  consoleReadValue = customLog3(calculatedWeight)
+  transformPreviousRead = transformRead
+  return calculatedWeight
 }
 
 const timeToUpdateTemperature = 50
 
 setInterval(() => {
   temperature = `-5|${readingsArray[count]}|1|0|1|2|HM20`
-  if (count > readingsArray.length - 1) count = 0
+  if (count >= readingsArray.length - 1) count = 0
   rawWeight = calculateNewMinimumWeight(
     Number(temperature?.split('|')[1] ?? '00'),
     kegType?.tara,
@@ -108,29 +120,30 @@ export function App() {
       borderHeight,
       canvasHeight - borderHeight,
     ])
-    createHistory(p5, logsWeights, 'cyan', [40, 10, borderHeight, canvasHeight - borderHeight])
+    createHistory(p5, logsWeights, 'cyan', [30, 0, borderHeight, canvasHeight - borderHeight])
 
     createDots(
       p5,
       logs,
       logsWeights,
       [40000, 10000, borderHeight, canvasHeight - borderHeight],
-      [40, 10, borderHeight, canvasHeight - borderHeight],
+      [30, 0, borderHeight, canvasHeight - borderHeight],
     )
 
     p5.fill(...orange)
       .text(customLog(rawRead), logsPos.log1, 32)
       .fill(...blue)
-      .text(customLog(rawRead), logsPos.log2, 32)
+      .text(consoleReadValue, logsPos.log2, 32)
       .fill(...white)
       .text(consoleLog, logsPos.log3, 32)
 
       .fill(...blue)
-      .text(`${customLog(rawWeight - kegType.tara)}L`, logsPos.log4, 32)
+      .text(`${customLog(rawWeight)}L`, logsPos.log4, 32)
       .fill(...white)
-      .text(`timeout:${customLog(timeOut)}`, logsPos.log5, 32)
+      .text(`timeout:${customLog(timeOutStabilized)}`, logsPos.log5, 32)
 
     p5.frameRate(60)
+
     if (logs.length > canvasWidth - borderHeight * 2) {
       logs.splice(0, 1)
       logsWeights.splice(0, 1)
