@@ -14,78 +14,67 @@ import {
 import { createDots } from './createDots'
 import { createHistory } from './createHistory'
 import { createLongArray } from './createLongArray'
-import { remap, customLog, clamp, ajustedClamp } from './utils'
+import { remap, customLog, adjustedClamp, customLog3 } from './utils'
 
 // canvas center log
-let consoleLog = ''
+const consoleLog = ''
 
 // scenario creation
 const readingsArray = createLongArray()
 const kegType = { tara: 10, size: 30 }
-
-// reading properties
-const prevMinimumReads: number[] = []
-let timeOut = 0
 
 let temperature = '-5|0|1|0|1|2|HM20'
 let rawRead = 30000
 let rawWeight = 30 // between 0, 30kg
 let count = 0
 
-// 
+//
 let timeOutStabilized = 0
 let consoleReadValue = '0'
-let transformLastRead = 0
-let maximumStabilizedValue = 0
-let zeroLock = 0
-let returnedValue = 0
-let lastNumberResult = 0
+let transformPreviousRead = 0
+let maxStabilizedRead = 0
+let zeroLock = false
+let calculatedWeight = 0
+let previousRead = 0
 
-  const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
-    const transformRead = Math.round((read / 1000) * 100) / 100
-    if (transformRead < tara * 0.75) { zeroLock = 0 }
-    if(transformRead > tara) {
-      if(Math.abs(transformLastRead - transformRead) < 0.5) {
-        timeOutStabilized += 1
-        if (timeOutStabilized > 6) {
-          zeroLock = 1
-          maximumStabilizedValue = transformRead
-          lastNumberResult = transformRead
-        }
-        // consoleLog = 'Estabilizado'
-      } else {
-        timeOutStabilized = 0
-        // consoleLog = '!=='
+const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
+  const transformRead = Math.round((read / 1000) * 100) / 100
+  if (transformRead < tara * 0.25) {
+    zeroLock = false
+  }
+
+  if (transformRead > tara) {
+    if (Math.abs(transformPreviousRead - transformRead) < 0.5) {
+      timeOutStabilized += 1
+      if (timeOutStabilized > 6) {
+        zeroLock = true
+        maxStabilizedRead = transformRead
+        previousRead = transformRead
       }
     } else {
-      // consoleLog = 'Aguardando'
+      timeOutStabilized = 0
     }
-if (transformRead > lastNumberResult && zeroLock ==1) {
-  consoleLog = 'manter valor anterior'
-} else if ( zeroLock ==1 ) {
-  consoleLog = 'atualizado'
-  lastNumberResult = transformRead
-}
+  }
+  if (transformRead < previousRead && zeroLock) {
+    previousRead = transformRead
+  }
 
-    if (zeroLock == 1 && lastNumberResult > tara){
-      if ((maximumStabilizedValue - tara) > size ){
-        returnedValue = remap(lastNumberResult, tara, maximumStabilizedValue, 0, size )
-      } else {
-        returnedValue = ajustedClamp(lastNumberResult, tara)
-      }
+  if (previousRead > tara && zeroLock) {
+    if (maxStabilizedRead - tara > size) {
+      calculatedWeight = remap(previousRead, tara, maxStabilizedRead, 0, size)
     } else {
-      returnedValue = ajustedClamp(tara, tara)
+      calculatedWeight = adjustedClamp(previousRead, tara)
     }
+  } else {
+    calculatedWeight = adjustedClamp(tara, tara)
+  }
 
- 
-    consoleReadValue = String(returnedValue)
-    
-    transformLastRead = transformRead
-  return returnedValue
+  consoleReadValue = customLog3(calculatedWeight)
+  transformPreviousRead = transformRead
+  return calculatedWeight
 }
 
-
-const timeToUpdateTemperature = 100
+const timeToUpdateTemperature = 50
 
 setInterval(() => {
   temperature = `-5|${readingsArray[count]}|1|0|1|2|HM20`
@@ -103,7 +92,6 @@ setInterval(() => {
 // canvas logs history
 const logs: number[] = []
 const logsWeights: number[] = []
-const logsWeightAdjustment: number[] = []
 
 export function App() {
   const setup = (p5: P5, canvasParentRef: Element) => {
@@ -125,7 +113,6 @@ export function App() {
 
     logs.push(rawRead)
     logsWeights.push(rawWeight)
-    logsWeightAdjustment.push(rawWeight)
 
     createHistory(p5, logs, 'orangered', [
       40000,
@@ -135,36 +122,31 @@ export function App() {
     ])
     createHistory(p5, logsWeights, 'cyan', [30, 0, borderHeight, canvasHeight - borderHeight])
 
-    // createHistory(p5, logsWeightAdjustment, 'black', [30, 0, borderHeight, canvasHeight - borderHeight])
-    
     createDots(
       p5,
       logs,
       logsWeights,
-      // logsWeightAdjustment,
       [40000, 10000, borderHeight, canvasHeight - borderHeight],
       [30, 0, borderHeight, canvasHeight - borderHeight],
-      // [30, 0, borderHeight, canvasHeight - borderHeight],
     )
-      
+
     p5.fill(...orange)
       .text(customLog(rawRead), logsPos.log1, 32)
       .fill(...blue)
-      // .text(customLog(rawRead), logsPos.log2, 32)
       .text(consoleReadValue, logsPos.log2, 32)
       .fill(...white)
       .text(consoleLog, logsPos.log3, 32)
 
       .fill(...blue)
-      .text(`${customLog(rawWeight - kegType.tara)}L`, logsPos.log4, 32)
+      .text(`${customLog(rawWeight)}L`, logsPos.log4, 32)
       .fill(...white)
-      .text(`timeout:${customLog(timeOut)}`, logsPos.log5, 32)
+      .text(`timeout:${customLog(timeOutStabilized)}`, logsPos.log5, 32)
 
     p5.frameRate(60)
+
     if (logs.length > canvasWidth - borderHeight * 2) {
       logs.splice(0, 1)
       logsWeights.splice(0, 1)
-      logsWeightAdjustment.splice(0, 1)
     }
   }
 

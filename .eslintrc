@@ -83,6 +83,7 @@
     "@typescript-eslint/no-var-requires": "off",
     "func-names": "off",
     "no-param-reassign": "off",
+    "sonarjs/cognitive-complexity": ["error", 16],
     "import/no-extraneous-dependencies": "off",
     // "react/no-unused-class-component-methods": "off",
     "react/no-namespace": "off",
