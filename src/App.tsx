@@ -17,7 +17,7 @@ import { createLongArray } from './createLongArray'
 import { remap, customLog, adjustedClamp, customLog3 } from './utils'
 
 // canvas center log
-const consoleLog = ''
+let consoleLog = ''
 
 // scenario creation
 const readingsArray = createLongArray()
@@ -39,8 +39,11 @@ let previousRead = 0
 
 const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
   const transformRead = Math.round((read / 1000) * 100) / 100
-  if (transformRead < tara * 0.25) {
+  if (transformRead < tara) {
+    consoleLog = 'zeroLock = false'
     zeroLock = false
+  } else {
+    consoleLog = ''
   }
 
   if (transformRead > tara) {
