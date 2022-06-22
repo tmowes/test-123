@@ -16,9 +16,6 @@ import { createHistory } from './createHistory'
 import { createLongArray } from './createLongArray'
 import { remap, customLog, adjustedClamp, customLog3 } from './utils'
 
-// canvas center log
-let consoleLog = ''
-
 // scenario creation
 const readingsArray = createLongArray()
 const kegType = { tara: 10, size: 30 }
@@ -30,51 +27,43 @@ let count = 0
 
 //
 let timeOutStabilized = 0
-let consoleReadValue = '0'
 let transformPreviousRead = 0
 let maxStabilizedRead = 0
 let zeroLock = false
-let calculatedWeight = 0
 let previousRead = 0
+
+const limitTime = 6
 
 const calculateNewMinimumWeight = (read: number, tara: number, size: number): number => {
   const transformRead = Math.round((read / 1000) * 100) / 100
   if (transformRead < tara) {
-    consoleLog = 'zeroLock = false'
     zeroLock = false
-  } else {
-    consoleLog = ''
   }
 
-  if (transformRead > tara) {
-    if (Math.abs(transformPreviousRead - transformRead) < 0.5) {
-      timeOutStabilized += 1
-      if (timeOutStabilized > 6) {
-        zeroLock = true
-        maxStabilizedRead = transformRead
-        previousRead = transformRead
-      }
-    } else {
-      timeOutStabilized = 0
-    }
-  }
-  if (transformRead < previousRead && zeroLock) {
-    previousRead = transformRead
-  }
-
-  if (previousRead > tara && zeroLock) {
-    if (maxStabilizedRead - tara > size) {
-      calculatedWeight = remap(previousRead, tara, maxStabilizedRead, 0, size)
-    } else {
-      calculatedWeight = adjustedClamp(previousRead, tara)
+  if (Math.abs(transformPreviousRead - transformRead) < 0.5 && transformRead > tara) {
+    timeOutStabilized += 1
+    if (timeOutStabilized > limitTime) {
+      zeroLock = true
+      maxStabilizedRead = transformRead
+      previousRead = transformRead
     }
   } else {
-    calculatedWeight = adjustedClamp(tara, tara)
+    timeOutStabilized = 0
   }
 
-  consoleReadValue = customLog3(calculatedWeight)
   transformPreviousRead = transformRead
-  return calculatedWeight
+
+  if (!zeroLock) {
+    return adjustedClamp(tara, tara)
+  }
+
+  previousRead = transformRead < previousRead ? transformRead : previousRead
+
+  if (maxStabilizedRead - tara > size) {
+    return remap(previousRead, tara, maxStabilizedRead, 0, size)
+  }
+
+  return adjustedClamp(previousRead, tara)
 }
 
 const timeToUpdateTemperature = 50
@@ -136,9 +125,9 @@ export function App() {
     p5.fill(...orange)
       .text(customLog(rawRead), logsPos.log1, 32)
       .fill(...blue)
-      .text(consoleReadValue, logsPos.log2, 32)
+      .text(customLog3(rawWeight), logsPos.log2, 32)
       .fill(...white)
-      .text(consoleLog, logsPos.log3, 32)
+      .text(previousRead, logsPos.log3, 32)
 
       .fill(...blue)
       .text(`${customLog(rawWeight)}L`, logsPos.log4, 32)
